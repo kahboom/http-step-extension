@@ -1,5 +1,7 @@
-import React from 'react';
-import './App.css';
+import * as React from 'react';
+// @ts-ignore
+import css from './App.css';
+import LocalButton from './Button';
 
 function App() {
   return (
@@ -9,6 +11,7 @@ function App() {
           A very awesome Step Extension.
         </p>
       </header>
+      <LocalButton />
     </div>
   );
 }
