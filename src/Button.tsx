@@ -8,7 +8,16 @@ const buttonStyling = {
   padding: '20px'
 };
 
-const Button = () => <button className={'superButton'} style={buttonStyling} onClick={() => console.log('BANANAS!')}>Best Button EVAR</button>;
+export type Props = {
+  onButtonClicked?: () => void;
+}
+
+const Button = (props: Props) => {
+  //() => console.log('BANANAS!')
+  return (
+    <button className={'superButton'} style={buttonStyling} onClick={props.onButtonClicked}>Best Button EVAR</button>
+  )
+};
 
 export default Button;
 

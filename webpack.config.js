@@ -39,7 +39,7 @@ module.exports = {
   },
   plugins: [
     new ModuleFederationPlugin({
-      name: "app2",
+      name: "stepextension",
       filename: "remoteEntry.js",
       exposes: {
         "./Button": "./src/Button",
