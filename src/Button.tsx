@@ -1,8 +1,8 @@
 import * as React from 'react';
 
 const buttonStyling = {
-  // backgroundColor: 'crimson',
-  backgroundColor: 'BlueViolet',
+  backgroundColor: 'crimson',
+  // backgroundColor: 'BlueViolet',
   color: 'white',
   borderRadius: '25px',
   border: 0,
