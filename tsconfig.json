@@ -2,7 +2,8 @@
   "compilerOptions": {
     "sourceMap": true,
     "strict": true,
-    "jsx": "react"
+    "jsx": "react",
+    "allowSyntheticDefaultImports": true
   },
   "include": [
     "src/**/*"
