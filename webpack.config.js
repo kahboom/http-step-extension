@@ -1,6 +1,7 @@
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const ModuleFederationPlugin = require("webpack").container.ModuleFederationPlugin;
 const DefinePlugin = require("webpack").DefinePlugin;
+const NodePolyfillPlugin = require('node-polyfill-webpack-plugin');
 const path = require("path");
 const deps = require("./package.json").dependencies;
 
@@ -8,6 +9,7 @@ module.exports = {
     entry: "./src/index",
     mode: "development",
     target: "web",
+    devtool: 'source-map',
     devServer: {
         static: {
             directory: path.join(__dirname, "dist"),
@@ -18,10 +20,14 @@ module.exports = {
         publicPath: "auto",
     },
     resolve: {
+
         extensions: [".ts", ".tsx", ".js"],
         fallback: {
             "http": require.resolve("stream-http"),
-            "https": false
+            // "https": false,
+            "util": require.resolve("util"),
+            "buffer": require.resolve("buffer"),
+
         }
     },
     module: {
@@ -75,11 +81,15 @@ module.exports = {
                 }
             }
         }),
+        new NodePolyfillPlugin(),
         new HtmlWebpackPlugin({
             template: "./public/index.html",
         }),
         new DefinePlugin({
+            browser: true,
+          //  'process': '',
             'process.env.NODE_ENV': JSON.stringify("development"),
         }),
+
     ],
 };

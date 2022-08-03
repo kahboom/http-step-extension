@@ -1,3 +1,4 @@
+import "@patternfly/patternfly/patternfly.css";
 import {
     Form,
     FormGroup,
@@ -5,45 +6,69 @@ import {
     Popover,
     ActionGroup,
     Button,
-    FileUpload, Dropdown, DropdownItem, DropdownToggle
+    FileUpload, Dropdown, DropdownItem, DropdownToggle, InputGroup, Checkbox
 } from '@patternfly/react-core';
 import * as React from "react"
 import {ReactElement, useEffect, useRef, useState} from "react";
-import { css } from '@patternfly/react-styles';
-//import  "@patternfly/patternfly/components/Button/Button.scss";
-import "@patternfly/patternfly/patternfly.css";
-import SwaggerParser from "@apidevtools/swagger-parser";
 
-interface IEndpoint {
+import SwaggerParser from "@apidevtools/swagger-parser";
+import {OpenAPI, OpenAPIV3, OpenAPIV2, OpenAPIV3_1} from "openapi-types";
+import {HttpEndpoint} from "./HttEndpoint";
+
+//TODO distinguish between source/sink type of extension
+
+
+export interface IEndpoint {
     name: string,
-    produces: string
+    pathItem: OpenAPIV2.PathItemObject | OpenAPIV3.PathItemObject | OpenAPIV3_1.PathItemObject | undefined;
+    operations: Map<string,OpenAPI.Operation>;
+
 }
- function parseApiSpec(input: string): IEndpoint[] {
-     const api: any = JSON.parse(input);
-     const paths = api.paths;
-     // paths.forEach(p => console.log(p))
-     //    console.log(Object.entries(paths));
-     const e: Array<IEndpoint> = [];
-     Object.entries(paths).forEach(p => {
-         console.log(p);
-         e.push({name: p[0], produces: 'application/json'});
-     });
-     return e;
- }
+function parseMethods()
+
+async function parseApiSpec(input: string | OpenAPI.Document): Promise<IEndpoint[]> {
+    console.log("parsing spec");
+    let swaggerParser: SwaggerParser = new SwaggerParser();
+
+    const e: Array<IEndpoint> = [];
+    let api: OpenAPIV2.Document | OpenAPIV3.Document | OpenAPIV3_1.Document;
+
+    try {
+        api = await swaggerParser.validate(input,{ dereference: { circular: "ignore" },});
+       // api = await swaggerParser.dereference(api);
+
+        Object.entries(swaggerParser.api.paths).forEach(p => e.push({name: p[0], pathItem: p[1]}));
+    } catch (error) {
+        console.error('error ' + error);
+    }
+
+    return e;
+}
 
 const HttpStep: React.FunctionComponent = (props: any) => {
     const [openApiSpecText, setOpenApiSpecText] = useState('');
     const endpoints = useRef<IEndpoint[]>([]);
-    const [current,setCurrent] = useState<IEndpoint>({name:'',produces:''});
-    const [isOpen, setIsOpen] = useState(false);
-    const [selected,setSelected] = useState("");
+    const [current, setCurrent] = useState<IEndpoint>({name: '', pathItem: {}, operations: new Map()});
+    const [isOpen, setIsOpen] = useState<boolean>(false);
+    const [selected, setSelected] = useState<string>("");
+    const [upload, setUpload] = useState<boolean>(false);
+    const [params,setParams] =useState<Map<string,string>>(new Map());
+    const [apiSpecUrl, setApiUrl] = useState<string>("https://api.chucknorris.io/documentation");
+
+    const parseSpec = async (input:string) => {
+        endpoints.current = await parseApiSpec(input);
+        setCurrent(endpoints.current[0]);
+
+    }
 
     useEffect(() => {
-        if (openApiSpecText !== '') {
-            endpoints.current = parseApiSpec(openApiSpecText);
-            setCurrent(endpoints.current[0]);
+        let apiDoc = '';
+        if (upload && openApiSpecText !== '') {
+            apiDoc = JSON.parse(openApiSpecText);
+            parseSpec(apiDoc).catch(console.error);
         }
-    }, [openApiSpecText]);
+
+    }, [openApiSpecText,upload],);
 
     const onToggle = (isOpen: boolean) => {
         setIsOpen(isOpen);
@@ -58,17 +83,16 @@ const HttpStep: React.FunctionComponent = (props: any) => {
         });
     };
 
-    function selectApiEndpoint(index:number) {
+    function selectApiEndpoint(index: number) {
         setIsOpen(false);
         setCurrent(endpoints.current[index]);
-
     }
 
-    const dropdownItems: Array<ReactElement> = [];
+    const dropdownEndpointsItems: Array<ReactElement> = [];
 
     endpoints.current.forEach((e, index) => {
-        dropdownItems.push(
-            <DropdownItem key={e.name} onClick={()=>{
+        dropdownEndpointsItems.push(
+            <DropdownItem key={e.name} onClick={() => {
                 selectApiEndpoint(index)
             }}>
                 {e.name}
@@ -83,7 +107,7 @@ const HttpStep: React.FunctionComponent = (props: any) => {
 
     function setValue() {
         props.notifyKaoto('Message from my remote Step Extension!', 'this is the description of the notification', 'success');
-        let data:any;
+        let data: any;
 
     }
 
@@ -92,42 +116,56 @@ const HttpStep: React.FunctionComponent = (props: any) => {
         props.notifyKaoto('Message from my remote Step Extension!', 'this is the description of the notification', 'success');
     }
 
+    const handleLoadClick = () => {
+        parseSpec(apiSpecUrl).catch(console.error);
+    }
+
+    const handleCheck = (checked: boolean) => {
+        setUpload(checked);
+    }
+
     return <Form>
-        <FormGroup fieldId="open-api-file-upload">
-            <FileUpload
+        <FormGroup label="OpenApi" fieldId="open-api-file-upload">
+            <Checkbox id='inputType' label='Upload spec' isChecked={upload} onChange={setUpload}/>
+
+            {upload && <FileUpload
                 id="simple-file"
                 value={openApiSpecText}
                 filenamePlaceholder="Drag and drop a open API spec or upload one"
                 onFileInputChange={handleFileInputChange}
                 onClearClick={handleClear}
                 browseButtonText="Upload"
-            />
-        </FormGroup>
+            />}
+            {!upload &&
+                <InputGroup>
+                    <TextInput id='specUrlInput' aria-label="Api spec url" value={apiSpecUrl} onChange={setApiUrl}/>
+                    <Button  onClick={handleLoadClick}>Load</Button>
+                </InputGroup>
+            }
 
-        <FormGroup label="Endpoints" fieldId="simple-form-note-01">
-            <Dropdown type="text" id="simple-form-note-01" name="simple-form-number" value="disabled"
-                      dropdownItems={dropdownItems}
-                     // onSelect={selectApi}
-                      isOpen={isOpen}
-                      toggle={
-                          <DropdownToggle id="toggle-basic" onToggle={onToggle}>
-                              {current.name}
-                          </DropdownToggle>
-                      }/>
-            {selected}
         </FormGroup>
-
-        <ActionGroup>
+        <FormGroup label="Base Path">
+            <InputGroup>
+                <TextInput id="basePathInput" aria-label="Base path"/>
+                <Dropdown minLength={500} type="text" id="simple-form-note-01" name="simple-form-number" value="disabled"
+                          dropdownItems={dropdownEndpointsItems}
+                    // onSelect={selectApi}
+                          isOpen={isOpen}
+                          toggle={
+                              <DropdownToggle id="toggle-basic" onToggle={onToggle}>
+                                  {current?.name}
+                              </DropdownToggle>
+                          }/>
+                {/*{selected}*/}
+            </InputGroup>
+        </FormGroup>
+        {current?.name!=='' && <HttpEndpoint endpoint={current}/>}
+         <ActionGroup>
             <Button variant="primary" onClick={setValue}>Submit</Button>
             <Button variant="link">Cancel</Button>
             <Button variant="link" onClick={handleClick}>nofify</Button>
         </ActionGroup>
     </Form>;
 };
-const HttpExtension = (props) => {
-
-
-    return <Button/>
-}
 
 export default HttpStep;
