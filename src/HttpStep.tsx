@@ -1,4 +1,3 @@
-import "@patternfly/patternfly/patternfly.css";
 import {
     Form,
     FormGroup,
@@ -8,6 +7,9 @@ import {
     Button,
     FileUpload, Dropdown, DropdownItem, DropdownToggle, InputGroup, Checkbox
 } from '@patternfly/react-core';
+import { css } from '@patternfly/react-styles';
+
+import styles from '@patternfly/react-styles/css/components/Button/button';
 import * as React from "react"
 import {ReactElement, useEffect, useRef, useState} from "react";
 
@@ -17,31 +19,25 @@ import {HttpEndpoint} from "./HttEndpoint";
 
 //TODO distinguish between source/sink type of extension
 
-
 export interface IEndpoint {
     name: string,
     pathItem: OpenAPIV2.PathItemObject | OpenAPIV3.PathItemObject | OpenAPIV3_1.PathItemObject | undefined;
-    operations: Map<string,OpenAPI.Operation>;
+    operations: Map<string, OpenAPI.Operation>;
 
 }
-function parseMethods()
 
 async function parseApiSpec(input: string | OpenAPI.Document): Promise<IEndpoint[]> {
-    console.log("parsing spec");
     let swaggerParser: SwaggerParser = new SwaggerParser();
 
     const e: Array<IEndpoint> = [];
     let api: OpenAPIV2.Document | OpenAPIV3.Document | OpenAPIV3_1.Document;
 
     try {
-        api = await swaggerParser.validate(input,{ dereference: { circular: "ignore" },});
-       // api = await swaggerParser.dereference(api);
-
+        api = await swaggerParser.validate(input, {dereference: {circular: "ignore"},});
         Object.entries(swaggerParser.api.paths).forEach(p => e.push({name: p[0], pathItem: p[1]}));
     } catch (error) {
         console.error('error ' + error);
     }
-
     return e;
 }
 
@@ -50,15 +46,15 @@ const HttpStep: React.FunctionComponent = (props: any) => {
     const endpoints = useRef<IEndpoint[]>([]);
     const [current, setCurrent] = useState<IEndpoint>({name: '', pathItem: {}, operations: new Map()});
     const [isOpen, setIsOpen] = useState<boolean>(false);
-    const [selected, setSelected] = useState<string>("");
     const [upload, setUpload] = useState<boolean>(false);
-    const [params,setParams] =useState<Map<string,string>>(new Map());
+    const [paramString, setParamString] = useState<string>('');
+    const [fullUrl, setFullUrl] = useState<string>('');
+    const [basePath, setBasePath] = useState<string>('');
     const [apiSpecUrl, setApiUrl] = useState<string>("https://api.chucknorris.io/documentation");
 
-    const parseSpec = async (input:string) => {
+    const parseSpec = async (input: string) => {
         endpoints.current = await parseApiSpec(input);
         setCurrent(endpoints.current[0]);
-
     }
 
     useEffect(() => {
@@ -67,8 +63,7 @@ const HttpStep: React.FunctionComponent = (props: any) => {
             apiDoc = JSON.parse(openApiSpecText);
             parseSpec(apiDoc).catch(console.error);
         }
-
-    }, [openApiSpecText,upload],);
+    }, [openApiSpecText, upload],);
 
     const onToggle = (isOpen: boolean) => {
         setIsOpen(isOpen);
@@ -94,6 +89,7 @@ const HttpStep: React.FunctionComponent = (props: any) => {
         dropdownEndpointsItems.push(
             <DropdownItem key={e.name} onClick={() => {
                 selectApiEndpoint(index)
+                constructUrl(e.name);
             }}>
                 {e.name}
             </DropdownItem>,
@@ -101,7 +97,6 @@ const HttpStep: React.FunctionComponent = (props: any) => {
     })
 
     const handleClear = (_event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
-        //  setFilename('');
         setOpenApiSpecText('');
     };
 
@@ -112,7 +107,6 @@ const HttpStep: React.FunctionComponent = (props: any) => {
     }
 
     const handleClick = () => {
-        console.log("click");
         props.notifyKaoto('Message from my remote Step Extension!', 'this is the description of the notification', 'success');
     }
 
@@ -120,10 +114,15 @@ const HttpStep: React.FunctionComponent = (props: any) => {
         parseSpec(apiSpecUrl).catch(console.error);
     }
 
-    const handleCheck = (checked: boolean) => {
-        setUpload(checked);
+    const constructUrl = (urParameters:string,bPath?:string) => {
+        setParamString(urParameters);
+        if(bPath!== undefined) {
+            setBasePath(bPath);
+            setFullUrl(bPath+urParameters);
+        } else {
+            setFullUrl(basePath+urParameters);
+        }
     }
-
     return <Form>
         <FormGroup label="OpenApi" fieldId="open-api-file-upload">
             <Checkbox id='inputType' label='Upload spec' isChecked={upload} onChange={setUpload}/>
@@ -139,32 +138,34 @@ const HttpStep: React.FunctionComponent = (props: any) => {
             {!upload &&
                 <InputGroup>
                     <TextInput id='specUrlInput' aria-label="Api spec url" value={apiSpecUrl} onChange={setApiUrl}/>
-                    <Button  onClick={handleLoadClick}>Load</Button>
+                    <Button onClick={handleLoadClick}>Load</Button>
                 </InputGroup>
             }
 
         </FormGroup>
         <FormGroup label="Base Path">
             <InputGroup>
-                <TextInput id="basePathInput" aria-label="Base path"/>
-                <Dropdown minLength={500} type="text" id="simple-form-note-01" name="simple-form-number" value="disabled"
+                <TextInput id="basePathInput" aria-label="Base path" value={basePath} onChange={(value:string) => {
+                    constructUrl(paramString,value)}
+                }/>
+                <Dropdown minLength={500} type="text" id="simple-form-note-01" name="simple-form-number"
+                          value="disabled"
                           dropdownItems={dropdownEndpointsItems}
-                    // onSelect={selectApi}
                           isOpen={isOpen}
                           toggle={
                               <DropdownToggle id="toggle-basic" onToggle={onToggle}>
                                   {current?.name}
                               </DropdownToggle>
                           }/>
-                {/*{selected}*/}
             </InputGroup>
         </FormGroup>
-        {current?.name!=='' && <HttpEndpoint endpoint={current}/>}
-         <ActionGroup>
-            <Button variant="primary" onClick={setValue}>Submit</Button>
+        {current?.name !== '' && <HttpEndpoint endpointUrl={current.name} endpoint={current} setUrl={constructUrl}/>}
+        <ActionGroup>
+            <Button className={css(styles.button)} variant="primary" onClick={setValue}>Submit</Button>
             <Button variant="link">Cancel</Button>
             <Button variant="link" onClick={handleClick}>nofify</Button>
         </ActionGroup>
+        <h3>{fullUrl}</h3>
     </Form>;
 };
 

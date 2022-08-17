@@ -3,6 +3,7 @@ const ModuleFederationPlugin = require("webpack").container.ModuleFederationPlug
 const DefinePlugin = require("webpack").DefinePlugin;
 const NodePolyfillPlugin = require('node-polyfill-webpack-plugin');
 const path = require("path");
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const deps = require("./package.json").dependencies;
 
 module.exports = {
@@ -14,7 +15,7 @@ module.exports = {
         static: {
             directory: path.join(__dirname, "dist"),
         },
-        port: 9000,
+        port: 9001,
     },
     output: {
         publicPath: "auto",
@@ -52,14 +53,19 @@ module.exports = {
                 use: ["style-loader", "css-loader"],
                 include: [
                     path.resolve(__dirname, 'src'),
-                    path.resolve(__dirname, 'node_modules/@patternfly/react-styles/css/'),
-                    path.resolve(__dirname, 'node_modules/@patternfly/patternfly/patternfly.css'),
-                    path.resolve(__dirname, 'node_modules/@patternfly/patternfly/components/'),
+                    path.resolve(__dirname, 'node_modules/patternfly'),
+                    path.resolve(__dirname, 'node_modules/@patternfly/patternfly'),
+                    path.resolve(__dirname, 'node_modules/@patternfly/react-styles/css'),
                     path.resolve(__dirname, 'node_modules/@patternfly/react-core/dist/styles/base.css'),
+                    path.resolve(__dirname, 'node_modules/@patternfly/react-core/dist/esm/@patternfly/patternfly'),
+                    path.resolve(__dirname, 'node_modules/@patternfly/react-core/node_modules/@patternfly/react-styles/css'),
+                    path.resolve(__dirname, 'node_modules/@patternfly/react-table/node_modules/@patternfly/react-styles/css'),
+                    path.resolve(__dirname, 'node_modules/@patternfly/react-inline-edit-extension/node_modules/@patternfly/react-styles/css')
                 ],
             }]
     },
     plugins: [
+        new MiniCssExtractPlugin(),
         new ModuleFederationPlugin({
             name: "httpStep",
             filename: "remoteEntry.js",
@@ -76,8 +82,14 @@ module.exports = {
                     singleton: true,
                     requiredVersion: deps["react-dom"],
                 },
-                "@patternfly/react-core": {
+                "@patternfly/react-core/": {
                     singleton: true
+                },
+                "@patternfly/react-styles": {
+                   singleton: true
+                },
+                'apidevtools/swagger-parser': {
+                    singleton:true,
                 }
             }
         }),
