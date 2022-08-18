@@ -36,7 +36,7 @@ const ParamFields = ({parameters, handleChange}) => {
 export type HttpEndpointProps = {
     endpoint: IEndpoint;
     endpointUrl: string,
-    setUrl: (value:string) => void;
+    setUrl: (value: string) => void;
 }
 export const HttpEndpoint = (props: HttpEndpointProps) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -74,15 +74,16 @@ export const HttpEndpoint = (props: HttpEndpointProps) => {
     }
 
     function getParameter(key: string): OpenAPI.Parameter {
-        let found:OpenAPI.Parameter;
-        methodsMap.get(currentMethod)?.parameters?.forEach((v:OpenAPI.Parameter) => {
-            if (v.name.toString() === key){
+        let found: OpenAPI.Parameter;
+        methodsMap.get(currentMethod)?.parameters?.forEach((v: OpenAPI.Parameter) => {
+            if (v.name.toString() === key) {
                 found = v;
             }
         });
 
         return found;
     }
+
     function selectMethod(name: string) {
         const params: Map<string, string> = getParameters(methodsMap.get(name));
         parameters.current = new Map(params);
@@ -114,7 +115,7 @@ export const HttpEndpoint = (props: HttpEndpointProps) => {
             if (val) {
                 const param: OpenAPI.Parameter = getParameter(key);
                 if (param.in === 'path') {
-                    uri = uri.replace(`{${key}}`,val);
+                    uri = uri.replace(`{${key}}`, val);
                 } else if (param.in === 'query') {
                     p = p + `&${key}=${val}`
                 }
@@ -125,8 +126,8 @@ export const HttpEndpoint = (props: HttpEndpointProps) => {
             p = '?' + p.substr(1);
         }
 
-       // setPath(p);
-        props.setUrl(uri+p);
+        // setPath(p);
+        props.setUrl(uri + p);
     }
 
     type PathProperties = { path: string };

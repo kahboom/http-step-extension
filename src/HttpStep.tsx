@@ -5,11 +5,8 @@ import {
     Popover,
     ActionGroup,
     Button,
-    FileUpload, Dropdown, DropdownItem, DropdownToggle, InputGroup, Checkbox
+    FileUpload, Dropdown, DropdownItem, DropdownToggle, InputGroup, Checkbox, FormSelect, FormSelectOption
 } from '@patternfly/react-core';
-import { css } from '@patternfly/react-styles';
-
-import styles from '@patternfly/react-styles/css/components/Button/button';
 import * as React from "react"
 import {ReactElement, useEffect, useRef, useState} from "react";
 
@@ -44,17 +41,17 @@ async function parseApiSpec(input: string | OpenAPI.Document): Promise<IEndpoint
 const HttpStep: React.FunctionComponent = (props: any) => {
     const [openApiSpecText, setOpenApiSpecText] = useState('');
     const endpoints = useRef<IEndpoint[]>([]);
-    const [current, setCurrent] = useState<IEndpoint>({name: '', pathItem: {}, operations: new Map()});
-    const [isOpen, setIsOpen] = useState<boolean>(false);
+    const [currentEndpoint, setCurrentEndpoint] = useState<IEndpoint>({name: '', pathItem: {}, operations: new Map()});
     const [upload, setUpload] = useState<boolean>(false);
     const [paramString, setParamString] = useState<string>('');
+    const [selectedEndpoint, setSelectedEndpoint] = useState<string>('');
     const [fullUrl, setFullUrl] = useState<string>('');
     const [basePath, setBasePath] = useState<string>('');
     const [apiSpecUrl, setApiUrl] = useState<string>("https://api.chucknorris.io/documentation");
 
     const parseSpec = async (input: string) => {
         endpoints.current = await parseApiSpec(input);
-        setCurrent(endpoints.current[0]);
+        setCurrentEndpoint(endpoints.current[0]);
     }
 
     useEffect(() => {
@@ -78,21 +75,22 @@ const HttpStep: React.FunctionComponent = (props: any) => {
         });
     };
 
-    function selectApiEndpoint(index: number) {
-        setIsOpen(false);
-        setCurrent(endpoints.current[index]);
+    function selectApiEndpoint(index: string) {
+        const i = Number(index);
+        setSelectedEndpoint(index);
+        setCurrentEndpoint(endpoints.current[i]);
+
+        constructUrl(endpoints.current[i]?.name);
     }
 
     const dropdownEndpointsItems: Array<ReactElement> = [];
 
     endpoints.current.forEach((e, index) => {
         dropdownEndpointsItems.push(
-            <DropdownItem key={e.name} onClick={() => {
-                selectApiEndpoint(index)
-                constructUrl(e.name);
-            }}>
-                {e.name}
-            </DropdownItem>,
+            <FormSelectOption key={e.name}
+                              value={index}
+                              label={e.name}
+                              isDisabled={false}/>
         );
     })
 
@@ -114,13 +112,13 @@ const HttpStep: React.FunctionComponent = (props: any) => {
         parseSpec(apiSpecUrl).catch(console.error);
     }
 
-    const constructUrl = (urParameters:string,bPath?:string) => {
+    const constructUrl = (urParameters: string, bPath?: string) => {
         setParamString(urParameters);
-        if(bPath!== undefined) {
+        if (bPath !== undefined) {
             setBasePath(bPath);
-            setFullUrl(bPath+urParameters);
+            setFullUrl(bPath + urParameters);
         } else {
-            setFullUrl(basePath+urParameters);
+            setFullUrl(basePath + urParameters);
         }
     }
     return <Form>
@@ -145,23 +143,21 @@ const HttpStep: React.FunctionComponent = (props: any) => {
         </FormGroup>
         <FormGroup label="Base Path">
             <InputGroup>
-                <TextInput id="basePathInput" aria-label="Base path" value={basePath} onChange={(value:string) => {
-                    constructUrl(paramString,value)}
+                <TextInput id="basePathInput" aria-label="Base path" value={basePath} onChange={(value: string) => {
+                    constructUrl(paramString, value)
+                }
                 }/>
-                <Dropdown minLength={500} type="text" id="simple-form-note-01" name="simple-form-number"
-                          value="disabled"
-                          dropdownItems={dropdownEndpointsItems}
-                          isOpen={isOpen}
-                          toggle={
-                              <DropdownToggle id="toggle-basic" onToggle={onToggle}>
-                                  {current?.name}
-                              </DropdownToggle>
-                          }/>
+                <FormSelect minLength={500} type="text" id="simple-form-note-01" name="simple-form-number"
+                            value={selectedEndpoint}
+                            onChange={selectApiEndpoint}>
+                    {dropdownEndpointsItems}
+                </FormSelect>
             </InputGroup>
         </FormGroup>
-        {current?.name !== '' && <HttpEndpoint endpointUrl={current.name} endpoint={current} setUrl={constructUrl}/>}
+        {currentEndpoint?.name !== '' &&
+            <HttpEndpoint endpointUrl={currentEndpoint.name} endpoint={currentEndpoint} setUrl={constructUrl}/>}
         <ActionGroup>
-            <Button className={css(styles.button)} variant="primary" onClick={setValue}>Submit</Button>
+            <Button variant="primary" onClick={setValue}>Submit</Button>
             <Button variant="link">Cancel</Button>
             <Button variant="link" onClick={handleClick}>nofify</Button>
         </ActionGroup>
