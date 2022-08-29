@@ -10,8 +10,7 @@ const isPatternflyStyles = (stylesheet) =>
   stylesheet.includes('@patternfly/react-styles/css/') ||
   stylesheet.includes('@patternfly/react-core/');
 
-module.exports = (env, argv) => {
-  // const isProduction = argv && argv.mode === 'production';
+module.exports = () => {
   return {
     entry: path.resolve(__dirname, 'src', 'index.tsx'),
     mode: 'development',
@@ -25,19 +24,12 @@ module.exports = (env, argv) => {
       extensions: ['.ts', '.tsx', '.js'],
       fallback: {
         http: require.resolve('stream-http'),
-        // "https": false,
         util: require.resolve('util'),
         buffer: require.resolve('buffer'),
       },
     },
     module: {
       rules: [
-        // {
-        //   test: /\.css$/,
-        //   use: [MiniCssExtractPlugin.loader, 'css-loader', 'style-loader'],
-        // include: (stylesheet) => !isPatternflyStyles(stylesheet),
-        // sideEffects: true,
-        // },
         {
           test: /\.css$/,
           include: isPatternflyStyles,
@@ -71,7 +63,6 @@ module.exports = (env, argv) => {
         name: 'httpStep',
         filename: 'remoteEntry.js',
         exposes: {
-          './HttpEndpoint': './src/HttpEndpoint',
           './HttpStep': './src/HttpStep',
         },
         shared: {

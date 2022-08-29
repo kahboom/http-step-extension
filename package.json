@@ -1,7 +1,8 @@
 {
-  "name": "stepextension",
+  "name": "http-step-extension",
   "version": "0.1.0",
   "private": true,
+  "port": "9001",
   "devDependencies": {
     "@babel/core": "7.15.5",
     "@babel/preset-react": "7.14.5",
