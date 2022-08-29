@@ -1,11 +1,11 @@
 {
+  "baseUrl": ".",
+  "extends": "./tsconfig.build.json",
   "compilerOptions": {
-    "sourceMap": true,
-    "strict": true,
-    "jsx": "react",
-    "allowSyntheticDefaultImports": true
+    "allowJs": false,
+    "baseUrl": ".",
+    "declaration": true,
+    "typeRoots": ["./node_modules/@types"]
   },
-  "include": [
-    "src/**/*"
-  ]
+  "include": ["src", "webpack.common.js", "./src/setupTests.ts"]
 }
