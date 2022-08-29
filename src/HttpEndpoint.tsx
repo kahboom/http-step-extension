@@ -84,6 +84,7 @@ export const HttpEndpoint = (props: HttpEndpointProps) => {
 
   function getParameter(key: string): OpenAPI.Parameter {
     let found: OpenAPI.Parameter;
+
     methodsMap.get(currentMethod)?.parameters?.forEach((v: OpenAPI.Parameter) => {
       if (v.name.toString() === key) {
         found = v;

@@ -109,16 +109,15 @@ const HttpStep = (props: any) => {
   function setValue() {
     props.notifyKaoto(
       'Message from my remote Step Extension!',
-      'this is the description of the notification',
+      'This is the description of the notification',
       'success'
     );
-    // let data: any;
   }
 
   const handleClick = () => {
     props.notifyKaoto(
       'Message from my remote Step Extension!',
-      'this is the description of the notification',
+      'This is the description of the notification',
       'success'
     );
   };
@@ -136,6 +135,7 @@ const HttpStep = (props: any) => {
       setFullUrl(basePath + urParameters);
     }
   };
+
   return (
     <Form>
       <FormGroup label="OpenApi" fieldId="open-api-file-upload">
@@ -194,11 +194,13 @@ const HttpStep = (props: any) => {
       )}
       <ActionGroup>
         <Button variant="primary" onClick={setValue}>
-          Submit
+          Save
         </Button>
-        <Button variant="link">Cancel</Button>
+        <Button variant="link" onClick={handleClear}>
+          Clear
+        </Button>
         <Button variant="link" onClick={handleClick}>
-          nofify
+          Notify
         </Button>
       </ActionGroup>
       <h3>{fullUrl}</h3>
