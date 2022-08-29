@@ -1,4 +1,4 @@
-import { HttpEndpoint } from './HttEndpoint';
+import { HttpEndpoint } from './HttpEndpoint';
 import SwaggerParser from '@apidevtools/swagger-parser';
 import {
   Form,
@@ -64,8 +64,6 @@ const HttpStep = (props: any) => {
     endpoints.current = await parseApiSpec(input);
     setCurrentEndpoint(endpoints.current[0]);
   };
-
-  // console.log(__webpack_share_scopes__.default);
 
   useEffect(() => {
     let apiDoc = '';

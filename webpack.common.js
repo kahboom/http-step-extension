@@ -13,9 +13,7 @@ const isPatternflyStyles = (stylesheet) =>
 module.exports = (env, argv) => {
   // const isProduction = argv && argv.mode === 'production';
   return {
-    entry: {
-      app: path.resolve(__dirname, 'src', 'index.tsx'),
-    },
+    entry: path.resolve(__dirname, 'src', 'index.tsx'),
     mode: 'development',
     target: 'web',
     devtool: 'source-map',
@@ -34,17 +32,21 @@ module.exports = (env, argv) => {
     },
     module: {
       rules: [
-        {
-          test: /\.css|s[ac]ss$/i,
-          use: [MiniCssExtractPlugin.loader, 'css-loader'],
-          include: (stylesheet) => !isPatternflyStyles(stylesheet),
-          sideEffects: true,
-        },
+        // {
+        //   test: /\.css$/,
+        //   use: [MiniCssExtractPlugin.loader, 'css-loader', 'style-loader'],
+        // include: (stylesheet) => !isPatternflyStyles(stylesheet),
+        // sideEffects: true,
+        // },
         {
           test: /\.css$/,
           include: isPatternflyStyles,
           use: ['null-loader'],
           sideEffects: true,
+        },
+        {
+          test: /\.css$/,
+          use: ['style-loader', 'css-loader'],
         },
         {
           test: /\.tsx?$/,
@@ -69,6 +71,7 @@ module.exports = (env, argv) => {
         name: 'httpStep',
         filename: 'remoteEntry.js',
         exposes: {
+          './HttpEndpoint': './src/HttpEndpoint',
           './HttpStep': './src/HttpStep',
         },
         shared: {
@@ -76,12 +79,10 @@ module.exports = (env, argv) => {
           ...peerDependencies,
           react: {
             singleton: true,
-            eager: true,
             requiredVersion: peerDependencies['react'],
           },
           'react-dom': {
             singleton: true,
-            eager: true,
             requiredVersion: peerDependencies['react-dom'],
           },
           'react-i18next': {
@@ -89,18 +90,14 @@ module.exports = (env, argv) => {
             requiredVersion: peerDependencies['react-i18next'],
           },
           'react-router-dom': {
-            singleton: true,
-            eager: true,
             requiredVersion: peerDependencies['react-router-dom'],
           },
           '@patternfly/patternfly/': {
             singleton: true,
-            eager: true,
             requiredVersion: peerDependencies['@patternfly/patternfly'],
           },
           '@patternfly/react-core/': {
             singleton: true,
-            eager: true,
             requiredVersion: peerDependencies['@patternfly/react-core'],
           },
         },
